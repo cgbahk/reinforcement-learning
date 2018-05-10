@@ -93,3 +93,7 @@ ENV/
 ### IPythonNotebook ###
 # Temporary data
 .ipynb_checkpoints/
+
+
+### my custom ##
+.idea/
