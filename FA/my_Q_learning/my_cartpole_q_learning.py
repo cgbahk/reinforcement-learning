@@ -13,12 +13,12 @@ if "../" not in sys.path:
 from lib import plotting
 from sklearn.linear_model import SGDRegressor
 from sklearn.kernel_approximation import RBFSampler
+from FA.my_Q_learning import custom_cartpole
 
 matplotlib.style.use('ggplot')
 
-env = gym.make('CartPole-v0')
-# todo: customized CartPole env
-# w/ restricted observation space & proper reward structure
+# env = gym.make('CartPole-v0')
+env = custom_cartpole.CartPoleEnv()
 
 # Feature Preprocessing: Normalize to zero mean and unit variance
 # We use a few samples from the observation space to do this
@@ -123,7 +123,7 @@ def make_epsilon_greedy_policy(estimator, epsilon, nA):
 
 def q_learning(env, estimator, num_episodes, discount_factor=1.0, epsilon=0.1, epsilon_decay=1.0):
     """
-    Q-Learning algorithm for fff-policy TD control using Function Approximation.
+    Q-Learning algorithm for off-policy TD control using Function Approximation.
     Finds the optimal greedy policy while following an epsilon-greedy policy.
 
     Args:
@@ -206,10 +206,7 @@ def q_learning(env, estimator, num_episodes, discount_factor=1.0, epsilon=0.1, e
 
 estimator = Estimator()
 
-# Note: For the Mountain Car we don't actually need an epsilon > 0.0
-# because our initial estimate for all states is too "optimistic" which leads
-# to the exploration of all states.
-stats = q_learning(env, estimator, 1000, epsilon=0.1, epsilon_decay=0.9)
+stats = q_learning(env, estimator, 100, epsilon=0.1, epsilon_decay=0.9)
 
 plotting.plot_cost_to_go_mountain_car(env, estimator)
 plotting.plot_episode_stats(stats, smoothing_window=25)
