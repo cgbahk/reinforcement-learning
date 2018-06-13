@@ -5,7 +5,6 @@ import numpy as np
 import sys
 import sklearn.pipeline
 import sklearn.preprocessing
-import math
 
 if "../" not in sys.path:
     sys.path.append("../")
@@ -13,20 +12,14 @@ if "../" not in sys.path:
 from lib import plotting
 from sklearn.linear_model import SGDRegressor
 from sklearn.kernel_approximation import RBFSampler
-from FA.my_Q_learning import custom_cartpole
 
 matplotlib.style.use('ggplot')
 
-env = gym.make('CartPole-v0')
-# env = custom_cartpole.CartPoleEnv()
+env = gym.envs.make("MountainCar-v0")
 
 # Feature Preprocessing: Normalize to zero mean and unit variance
 # We use a few samples from the observation space to do this
-high = env.observation_space.high.copy()
-high[1] = 4 * math.pi
-high[3] = 4 * math.pi
-obs_sp = gym.spaces.Box(-high, high)
-observation_examples = np.array([obs_sp.sample()[1:] for x in range(10000)])
+observation_examples = np.array([env.observation_space.sample() for x in range(10000)])
 scaler = sklearn.preprocessing.StandardScaler()
 scaler.fit(observation_examples)
 
@@ -63,7 +56,7 @@ class Estimator():
         """
         Returns the featurized representation for a state.
         """
-        scaled = scaler.transform([state[1:]])  # trim as first state(x) is not relavent to goal
+        scaled = scaler.transform([state])
         featurized = featurizer.transform(scaled)
         return featurized[0]
 
@@ -123,7 +116,7 @@ def make_epsilon_greedy_policy(estimator, epsilon, nA):
 
 def q_learning(env, estimator, num_episodes, discount_factor=1.0, epsilon=0.1, epsilon_decay=1.0):
     """
-    Q-Learning algorithm for off-policy TD control using Function Approximation.
+    Q-Learning algorithm for fff-policy TD control using Function Approximation.
     Finds the optimal greedy policy while following an epsilon-greedy policy.
 
     Args:
@@ -173,7 +166,7 @@ def q_learning(env, estimator, num_episodes, discount_factor=1.0, epsilon=0.1, e
 
             # Take a step
             next_state, reward, done, _ = env.step(action)
-            env.render()  # my test
+            env.render()
 
             # Update statistics
             stats.episode_rewards[i_episode] += reward
@@ -206,7 +199,10 @@ def q_learning(env, estimator, num_episodes, discount_factor=1.0, epsilon=0.1, e
 
 estimator = Estimator()
 
-stats = q_learning(env, estimator, 10000, epsilon=0.1, epsilon_decay=.9)
+# Note: For the Mountain Car we don't actually need an epsilon > 0.0
+# because our initial estimate for all states is too "optimistic" which leads
+# to the exploration of all states.
+stats = q_learning(env, estimator, 100, epsilon=0.0)
 
 # plotting.plot_cost_to_go_mountain_car(env, estimator)
 # plotting.plot_episode_stats(stats, smoothing_window=25)
